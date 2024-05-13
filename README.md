@@ -1,20 +1,15 @@
 ## MSVR
-PA1
+PA2
 
 Figure from VGGI
 
-Examples of program
+Examples of program with me on the background
 
-![image1](./images/image1.png)
 
-![best suitable Eye separation and COnvergence for me](./images/image2.png)
-best suitable Eye separation and COnvergence for me
-![best suitable Eye separation and COnvergence for me](./images/image3.png)
-best suitable Eye separation and COnvergence for me
-
-![Example of the program](./images/output1.gif)
-Example of the program
-
-![Me in glassses](./images/image4_me.jpg)
-Me in glassses
+![me in glasses1](./images/image1.png)
+Me in glasses 1
+![me in glasses2](./images/image2.png)
+Me in glasses 2
+![Me in glassses3](./images/image3.png)
+Me in glassses 3
 

@@ -6,6 +6,7 @@ let shProgram;                  // A shader program
 let spaceball;                  // A SimpleRotator object that lets the user rotate the view by mouse.
 let stereoCamera;
 let gui;
+let texture, camera, cameraTexture, cameraSurface;
 
 function deg2rad(angle) {
     return angle * Math.PI / 180;
@@ -86,7 +87,21 @@ function draw() {
 
     /* Multiply the projection matrix times the modelview matrix to give the
        combined transformation matrix, and send that to the shader program. */
-    let modelViewProjection = m4.multiply(projection, matAccum1);
+
+    let modelViewProjection = m4.identity();
+    gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, modelViewProjection);
+    gl.bindTexture(gl.TEXTURE_2D, cameraTexture);
+        gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            camera
+        );
+    cameraSurface.Draw();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.clear(gl.DEPTH_BUFFER_BIT);
     stereoCamera.ApplyLeftFrustum()
     modelViewProjection = m4.multiply(stereoCamera.projection, m4.multiply(stereoCamera.modelView, matAccum1));
     // modelViewProjection = m4.identity()
@@ -174,7 +189,11 @@ function initGL() {
     shProgram.iAttribVertex = gl.getAttribLocation(prog, "vertex");
     shProgram.iAttribTexCoord = gl.getAttribLocation(prog, "texture");
     shProgram.iModelViewProjectionMatrix = gl.getUniformLocation(prog, "ModelViewProjectionMatrix");
-
+    camera = getCamera();
+    cameraTexture = CreateTexture();
+    cameraSurface = new Model();
+    cameraSurface.BufferData([-1, -1, 0, 1, 1, 0, 1, -1, 0, 1, 1, 0, -1, -1, 0, -1, 1, 0]);
+    cameraSurface.TexCoordBufferData([1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0]);
     surface = new Model('Surface');
     surface.BufferData(CreateSurfaceData());
     surface.TexCoordBufferData(CreateSurfaceTexCoords());
@@ -293,7 +312,7 @@ function init() {
 }
 
 function loadTexture() {
-    let texture = gl.createTexture();
+    texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
