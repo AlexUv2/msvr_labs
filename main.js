@@ -79,7 +79,7 @@ function draw() {
     /* Get the view matrix from the SimpleRotator object.*/
     let modelView = spaceball.getViewMatrix();
 
-    let rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0.7);
+    let rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], Math.PI / 2);
     let translateToPointZero = m4.translation(0, 0, -10);
 
     let matAccum0 = m4.multiply(rotateToPointZero, modelView);
@@ -91,19 +91,22 @@ function draw() {
     let modelViewProjection = m4.identity();
     gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, modelViewProjection);
     gl.bindTexture(gl.TEXTURE_2D, cameraTexture);
-        gl.texImage2D(
-            gl.TEXTURE_2D,
-            0,
-            gl.RGBA,
-            gl.RGBA,
-            gl.UNSIGNED_BYTE,
-            camera
-        );
+    gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        camera
+    );
     cameraSurface.Draw();
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.clear(gl.DEPTH_BUFFER_BIT);
     stereoCamera.ApplyLeftFrustum()
     modelViewProjection = m4.multiply(stereoCamera.projection, m4.multiply(stereoCamera.modelView, matAccum1));
+    if (!notSet) {
+        modelViewProjection = m4.multiply(stereoCamera.projection, m4.multiply(stereoCamera.modelView, m4.multiply(matAccum1, m4.xRotation(deg2rad(heading)))));
+    }
     // modelViewProjection = m4.identity()
     gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, modelViewProjection);
     gl.colorMask(true, false, false, false);
@@ -112,6 +115,9 @@ function draw() {
 
     stereoCamera.ApplyRightFrustum()
     modelViewProjection = m4.multiply(stereoCamera.projection, m4.multiply(stereoCamera.modelView, matAccum1));
+    if (!notSet) {
+        modelViewProjection = m4.multiply(stereoCamera.projection, m4.multiply(stereoCamera.modelView, m4.multiply(matAccum1, m4.xRotation(deg2rad(heading)))));
+    }
     gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, modelViewProjection);
     gl.colorMask(false, true, true, false);
     surface.Draw();
@@ -332,4 +338,38 @@ function loadTexture() {
         console.log("imageLoaded")
         draw()
     }
+}
+let magSensor;
+let x1, y1, z1, x2, y2, z2, notSet = true;
+let angle = 0;
+let initialHeading = 0
+let heading = 0;
+function readMagSensor() {
+    magSensor = new Magnetometer({ frequency: 60 });
+
+    magSensor.addEventListener("reading", (e) => {
+        if (notSet) {
+            initialHeading = Math.atan2(magSensor.y, magSensor.x) * (180 / Math.PI);
+            if (initialHeading < 0) {
+                initialHeading += 360;
+            }
+            notSet = false
+
+        }
+        document.getElementById("x").innerHTML = magSensor.x
+        document.getElementById("y").innerHTML = magSensor.y
+        document.getElementById("z").innerHTML = magSensor.z
+        heading = Math.atan2(magSensor.y, magSensor.x) * (180 / Math.PI);
+        if (heading < 0) {
+            heading += 360;
+        }
+        document.getElementById("z").innerHTML = heading
+
+    });
+    magSensor.start();
+}
+const getVectorAngle = ([x1, y1], [x2, y2]) => {
+    const x = x2 - x1
+    const y = y2 - y1
+    return (((Math.acos(y / Math.sqrt(x * x + y * y)) * (Math.sign(x) || 1)) * 180 / Math.PI) + 360) % 360
 }
