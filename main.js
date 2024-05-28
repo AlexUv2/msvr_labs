@@ -68,7 +68,7 @@ function ShaderProgram(name, program) {
  * (Note that the use of the above drawPrimitive function is not an efficient
  * way to draw with WebGL.  Here, the geometry is so simple that it doesn't matter.)
  */
-function draw() {
+function draw(rotationMatrix = m4.identity()) {
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -79,7 +79,7 @@ function draw() {
     /* Get the view matrix from the SimpleRotator object.*/
     let modelView = spaceball.getViewMatrix();
 
-    let rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], Math.PI / 2);
+    let rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0.01);
     let translateToPointZero = m4.translation(0, 0, -10);
 
     let matAccum0 = m4.multiply(rotateToPointZero, modelView);
@@ -103,21 +103,14 @@ function draw() {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.clear(gl.DEPTH_BUFFER_BIT);
     stereoCamera.ApplyLeftFrustum()
-    modelViewProjection = m4.multiply(stereoCamera.projection, m4.multiply(stereoCamera.modelView, matAccum1));
-    if (!notSet) {
-        modelViewProjection = m4.multiply(stereoCamera.projection, m4.multiply(stereoCamera.modelView, m4.multiply(matAccum1, m4.xRotation(deg2rad(heading)))));
-    }
-    // modelViewProjection = m4.identity()
+    modelViewProjection = m4.multiply(stereoCamera.projection, m4.multiply(stereoCamera.modelView, m4.multiply(matAccum1, rotationMatrix)));
     gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, modelViewProjection);
     gl.colorMask(true, false, false, false);
     surface.Draw();
     gl.clear(gl.DEPTH_BUFFER_BIT);
 
     stereoCamera.ApplyRightFrustum()
-    modelViewProjection = m4.multiply(stereoCamera.projection, m4.multiply(stereoCamera.modelView, matAccum1));
-    if (!notSet) {
-        modelViewProjection = m4.multiply(stereoCamera.projection, m4.multiply(stereoCamera.modelView, m4.multiply(matAccum1, m4.xRotation(deg2rad(heading)))));
-    }
+    modelViewProjection = m4.multiply(stereoCamera.projection, m4.multiply(stereoCamera.modelView, m4.multiply(matAccum1, rotationMatrix)));
     gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, modelViewProjection);
     gl.colorMask(false, true, true, false);
     surface.Draw();
@@ -313,8 +306,6 @@ function init() {
             }
         },
     ])
-    draw();
-    draw_();
 }
 
 function loadTexture() {
@@ -336,7 +327,6 @@ function loadTexture() {
             image
         );
         console.log("imageLoaded")
-        draw()
     }
 }
 let magSensor;
@@ -345,28 +335,22 @@ let angle = 0;
 let initialHeading = 0
 let heading = 0;
 function readMagSensor() {
-    magSensor = new Magnetometer({ frequency: 60 });
-
-    magSensor.addEventListener("reading", (e) => {
-        if (notSet) {
-            initialHeading = Math.atan2(magSensor.y, magSensor.x) * (180 / Math.PI);
-            if (initialHeading < 0) {
-                initialHeading += 360;
-            }
-            notSet = false
-
-        }
-        document.getElementById("x").innerHTML = magSensor.x
-        document.getElementById("y").innerHTML = magSensor.y
-        document.getElementById("z").innerHTML = magSensor.z
-        heading = Math.atan2(magSensor.y, magSensor.x) * (180 / Math.PI);
-        if (heading < 0) {
-            heading += 360;
-        }
-        document.getElementById("z").innerHTML = heading
-
-    });
-    magSensor.start();
+    const handleOrientationEvent = (frontToBack, leftToRight, rotateDegrees) => {
+        let m = m4.multiply(m4.xRotation(deg2rad(frontToBack)), m4.multiply(m4.yRotation(deg2rad(leftToRight)), m4.zRotation(deg2rad(rotateDegrees))))
+        draw(m)
+    };
+    if (window.DeviceOrientationEvent) {
+        window.addEventListener(
+            "deviceorientation",
+            (event) => {
+                const rotateDegrees = event.alpha; // alpha: rotation around z-axis
+                const leftToRight = event.gamma; // gamma: left to right
+                const frontToBack = event.beta; // beta: front back motion
+                handleOrientationEvent(frontToBack, leftToRight, rotateDegrees);
+            },
+            true,
+        );
+    }
 }
 const getVectorAngle = ([x1, y1], [x2, y2]) => {
     const x = x2 - x1
