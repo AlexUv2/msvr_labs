@@ -1,12 +1,8 @@
 ## MSVR
-### PA4
+### CWG
 
 #### Figure from VGGI
 
-### Orientation in space using sensor fusion
 
-
-![me in glasses1](./images/output2.gif)
-Program example
-
-
+### Video in the project root directory with name 
+# IMG_4951.MOV

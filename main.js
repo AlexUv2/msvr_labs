@@ -7,6 +7,7 @@ let spaceball;                  // A SimpleRotator object that lets the user rot
 let stereoCamera;
 let gui;
 let texture, camera, cameraTexture, cameraSurface;
+let sphereSurface;
 
 function deg2rad(angle) {
     return angle * Math.PI / 180;
@@ -101,6 +102,16 @@ function draw(rotationMatrix = m4.identity()) {
     );
     cameraSurface.Draw();
     gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.clear(gl.DEPTH_BUFFER_BIT);
+    let y = 1.0 * Math.cos(deg2rad(gamma)) * Math.cos(deg2rad(beta))
+    let x = 1.0 * Math.sin(deg2rad(gamma)) * Math.cos(deg2rad(beta))
+    let z = 1.0 * Math.sin(deg2rad(beta));
+    modelViewProjection = m4.translation(x, y, z);
+    if (panner) {
+        panner.setPosition(x, y, z);
+    }
+    gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, modelViewProjection);
+    sphereSurface.Draw();
     gl.clear(gl.DEPTH_BUFFER_BIT);
     stereoCamera.ApplyLeftFrustum()
     modelViewProjection = m4.multiply(stereoCamera.projection, m4.multiply(stereoCamera.modelView, m4.multiply(matAccum1, rotationMatrix)));
@@ -197,6 +208,9 @@ function initGL() {
     surface.BufferData(CreateSurfaceData());
     surface.TexCoordBufferData(CreateSurfaceTexCoords());
 
+    sphereSurface = new Model('Sphere');
+    sphereSurface.BufferData(CreateSphereData());
+    sphereSurface.TexCoordBufferData(CreateSurfaceData());
 
     gl.enable(gl.DEPTH_TEST);
 }
@@ -306,6 +320,7 @@ function init() {
             }
         },
     ])
+    initAudio()
 }
 
 function loadTexture() {
@@ -334,6 +349,8 @@ let x1, y1, z1, x2, y2, z2, notSet = true;
 let angle = 0;
 let initialHeading = 0
 let heading = 0;
+let gamma = 0,
+    beta = 0;
 function readMagSensor() {
     const handleOrientationEvent = (frontToBack, leftToRight, rotateDegrees) => {
         let m = m4.multiply(m4.xRotation(deg2rad(frontToBack)), m4.multiply(m4.yRotation(deg2rad(leftToRight)), m4.zRotation(deg2rad(rotateDegrees))))
@@ -345,7 +362,9 @@ function readMagSensor() {
             (event) => {
                 const rotateDegrees = event.alpha; // alpha: rotation around z-axis
                 const leftToRight = event.gamma; // gamma: left to right
+                gamma = event.gamma;
                 const frontToBack = event.beta; // beta: front back motion
+                beta = event.beta;
                 handleOrientationEvent(frontToBack, leftToRight, rotateDegrees);
             },
             true,

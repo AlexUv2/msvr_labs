@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 
-    <title>PA-4</title>
+    <title>CGW</title>
     <style>
         body {
             background-color: #EEEEEE;
@@ -15,6 +15,8 @@
     <script src="./Utils/guify.min.js"></script>
     <script src="./Utils/trackball-rotator.js"></script>
     <script src="./Utils/m4.js"></script>
+    <script src="./sphereGeometry.js"></script>
+    <script src="./cgw.js"></script>
     <script src="./pa2.js"></script>
     <script src="./StereoCamera.js"></script>
     <script src="./shader.gpu"></script>
@@ -25,13 +27,17 @@
 <body onload="init()">
 
     <h2>A Conical Surface with a Directrix Curve on a Sphere with "Trackball" Mouse Rotation</h2>
-    <p>Allow camera access to explore PA4</p>
+    <p>Allow camera access to explore СПЦ</p>
     <p id="message">Use a finger on the screen on the Conical Surface with a Directrix Curve on a Sphere to rotate it.<br>
-    </p>
     <p id="x">x</p>
     <p id="y">y</p>
     <p id="z">z</p>
-    <button onclick="readMagSensor()">read magSensor</button>
+
+    <button onclick="readMagSensor()">enable translation ability</button><br>
+    <label for="checker">Turn on/off lowpass filter(enabled by default)</label>
+    <input type="checkbox" name="checker" id="checker" checked><br>
+    <audio id="audioID" src="https://4dca8c9e-b9fd-4559-b6bc-5cc9cc26233b-00-18jr55o5dkwxx.picard.replit.dev/02__Master_Of_Puppets_64kb.mp3"
+            crossorigin="anonymous" controls></audio>
 
     <div id="canvas-holder">
         <canvas width="600" height="600" id="webglcanvas" style="background-color:red"></canvas>
